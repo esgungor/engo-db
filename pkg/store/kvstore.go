@@ -1,9 +1,12 @@
-package main
+package store
 
 import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/esgungor/engo-db/pkg/wal"
+	"github.com/mitchellh/mapstructure"
 )
 
 type Entry struct {
@@ -15,11 +18,11 @@ type Entry struct {
 
 type KeyValueStore struct {
 	Kv   map[string]string
-	wal  WAL
+	wal  wal.WAL
 	lock sync.Mutex
 }
 
-func NewKeyValueStore(wal WAL) KeyValueStore {
+func NewKeyValueStore(wal wal.WAL) KeyValueStore {
 
 	return KeyValueStore{
 		Kv:   map[string]string{},
@@ -31,8 +34,10 @@ func NewKeyValueStore(wal WAL) KeyValueStore {
 func (k *KeyValueStore) recoverFromWAL() {
 	k.lock.Lock()
 	defer k.lock.Unlock()
-	k.wal.RecoverFromWAL(&k.lock, func(e Entry) error {
-		err := k.applyCommand(e)
+	k.wal.RecoverFromWAL(&k.lock, func(e any) error {
+		var entry Entry
+		mapstructure.Decode(e, &entry)
+		err := k.applyCommand(entry)
 		return err
 	})
 }

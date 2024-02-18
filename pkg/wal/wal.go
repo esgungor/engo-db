@@ -1,4 +1,4 @@
-package main
+package wal
 
 import (
 	"encoding/json"
@@ -7,11 +7,11 @@ import (
 	"sync"
 )
 
-type insertFn func(Entry) error
+type InsertFn func(any) error
 
 type WAL interface {
-	AppendWAL(event Entry, lock *sync.Mutex) error
-	RecoverFromWAL(lock *sync.Mutex, fn insertFn) error
+	AppendWAL(event any, lock *sync.Mutex) error
+	RecoverFromWAL(lock *sync.Mutex, fn InsertFn) error
 }
 
 type wal struct {
@@ -24,10 +24,12 @@ func NewWAL(path string) (WAL, error) {
 	}, nil
 }
 
-func (w wal) AppendWAL(event Entry, lock *sync.Mutex) error {
+func (w wal) AppendWAL(event any, lock *sync.Mutex) error {
 	lock.Lock()
 	defer lock.Unlock()
+
 	f, err := os.OpenFile(w.path, os.O_APPEND|os.O_WRONLY, 0777)
+	defer f.Close()
 	if err != nil {
 		return err
 	}
@@ -36,17 +38,18 @@ func (w wal) AppendWAL(event Entry, lock *sync.Mutex) error {
 	if err != nil {
 		return err
 	}
+	f.Sync() // crash-consistency
 	return nil
 }
 
-func (w wal) RecoverFromWAL(lock *sync.Mutex, fn insertFn) error {
+func (w wal) RecoverFromWAL(lock *sync.Mutex, fn InsertFn) error {
 	f, err := os.OpenFile(w.path, os.O_RDONLY, 0777)
 	if err != nil {
 		return err
 	}
 	dec := json.NewDecoder(f)
 	for {
-		var entry Entry
+		var entry any
 		err := dec.Decode(&entry)
 		if err == io.EOF {
 			break
