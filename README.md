@@ -20,6 +20,16 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/your-username/fundb.git
-cd fundb
-make dev
+cd engo-db
+make server
+./server
+```
+
+Using Db
+
+```bash
+cd engo-db
+make client
+./cli INSERT x y
+./cli GET x y
 ```

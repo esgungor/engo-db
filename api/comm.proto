@@ -1,0 +1,29 @@
+
+syntax = "proto3";
+
+option go_package = "github.com/esgungor/engo-db/api";
+
+package api;
+
+// The greeting service definition.
+service Command {
+  // Sends a greeting
+  rpc Command (CommandRequest) returns (CommandReply) {}
+ 
+}
+
+// The request message containing the user's name.
+message CommandRequest {
+  string operation = 1;
+  string key = 2;
+  string value = 3;
+}
+
+// The response message containing the greetings
+message CommandReply {
+  string message = 1;
+  string key = 2;
+  string value = 3;
+}
+
+

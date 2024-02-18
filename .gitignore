@@ -9,7 +9,9 @@
 *.dylib
 *.log
 
-
+server
+client
+*.log
 # Test binary, built with `go test -c`
 *.test
 
